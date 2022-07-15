@@ -27,7 +27,7 @@ public:
     bool IsTouch(const Location& loc_in) const;
     void Draw(Board& board) const;
 private:
-    static constexpr int nWallMax = 5;
+    static constexpr int nWallMax = 10;
     Wall walls[nWallMax];
     int nWalls = 1;
 };
