@@ -6,6 +6,7 @@
 #include "Snake.h"
 #include "Goal.h"
 #include "Sprite.h"
+#include "FrameTime.h"
 
 class Game
 {
@@ -21,6 +22,8 @@ private:
     void Draw();
     void DrawGameText(const char* text);
 
+    FrameTime fr;
+    float dt;
     std::mt19937 rng;
     Board board;
     Location delta_loc = {1, 0};

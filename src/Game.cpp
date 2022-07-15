@@ -32,6 +32,8 @@ void Game::Tick()
 }
 void Game::Update()
 {
+    dt = fr.Mark();
+    
     if(!IsGameOver)
     {
         if(IsKeyPressed(KEY_UP))
