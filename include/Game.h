@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <random>
+#include "Settings.h"
 #include "raylib.h"
 #include "Board.h"
 #include "Snake.h"
@@ -22,20 +23,26 @@ private:
     void Draw();
     void DrawGameText(const char* text);
 
+    void RestartGame();
+
+    Sound beat;
+    Sound eat;
+    settings::Config config;
+
     FrameTime fr;
-    float dt;
     std::mt19937 rng;
-    Board board;
+
+    Board* board;
     Location delta_loc = {1, 0};
     Location last_delta_loc = {1, 0};
 
-    Snake snake;
-    static constexpr int snakePeriod = 10;
-    int snakeMoveCount = 0;
+    Snake* snake;
+    float snakePeriod = 0.2f;
+    float snakeMoveCount = 0.0f;
 
-    Goal goal;
+    Goal* goal;
     
-    Sprite sprite;
+    Sprite* sprite;
     static constexpr int spritePeriod = 250;
     int spriteMoveCount = 0;
 

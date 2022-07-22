@@ -1,36 +1,44 @@
 #include <assert.h>
 #include "Snake.h"
-Snake::Snake(const Location& loc_in)
+Snake::Snake(const Location& loc_in, const settings::Config& config)
+    :
+    nSegmentMax( config.GetWidth() * config.GetHeight() / 4 ),
+    pSegments( new Segment[nSegmentMax] )
 {
-    segments[0].InitHead( loc_in );
-    segments[1].InitBody( loc_in );
+    pSegments[0].InitHead( loc_in );
+    pSegments[1].InitBody( loc_in );
+}
+Snake::~Snake()
+{
+    delete [] pSegments;
+    pSegments = nullptr;
 }
 void Snake::MoveBy(const Location& delta_loc_in)
 {
     for(int i = nSegments - 1; i > 0; --i)
     {
-        segments[i].Follow( segments[i - 1] );
+        pSegments[i].Follow( pSegments[i - 1] );
     }
-    segments[0].MoveBy( delta_loc_in );
+    pSegments[0].MoveBy( delta_loc_in );
 }
 void Snake::Grow()
 {
     if( nSegments < nSegmentMax )
     {
-        segments[nSegments].InitBody();
+        pSegments[nSegments].InitBody();
         ++nSegments;
     }
 }
-void Snake::Draw(Board& board) const
+void Snake::Draw(Board* board) const
 {
     for(int i = 0; i < nSegments; ++i)
     {
-        segments[i].Draw( board );
+        pSegments[i].Draw( board );
     }
 }
 Location Snake::GetNextHeadLocation(const Location& delta_loc) const
 {
-    Location l( segments[0].GetLocation() );
+    Location l( pSegments[0].GetLocation() );
     l.Add( delta_loc );
     return l;
 }
@@ -38,7 +46,7 @@ bool Snake::IsInTileExceptEnd(const Location& target) const
 {
     for(int i = 0; i < nSegments - 1; ++i)
     {
-        if(segments[i].GetLocation() == target)
+        if(pSegments[i].GetLocation() == target)
         {
             return true;
         }
@@ -49,7 +57,7 @@ bool Snake::IsInTile(const Location& target) const
 {
     for(int i = 0; i < nSegments; ++i)
     {
-        if(segments[i].GetLocation() == target)
+        if(pSegments[i].GetLocation() == target)
         {
             return true;
         }
@@ -81,9 +89,9 @@ void Snake::Segment::MoveBy(const Location& delta_loc_in)
     assert( abs(delta_loc_in.x) + abs(delta_loc_in.y) == 1 );
     loc.Add(delta_loc_in);
 }
-void Snake::Segment::Draw(Board& board) const
+void Snake::Segment::Draw(Board* board) const
 {
-    board.DrawCell( loc, color );
+    board->DrawCell( loc, color );
 }
 const Location& Snake::Segment::GetLocation() const
 { 

@@ -1,18 +1,25 @@
 #include <assert.h>
 #include "Game.h"
 #include "raylib.h"
-#include "Settings.h"
+#include <iostream>
 
 Game::Game(int width, int height, int fps, std::string title)
     :
+    beat( LoadSound("../assets/sound/frad - first date.mp3") ),
+    config( "../config/config.txt" ),
     rng( std::random_device()() ),
-    snake( {5, 5} ),
-    goal(rng, board, snake),
-    sprite(rng, board, snake, goal)
+    board( new Board(config.GetWidth(), config.GetHeight(), config.GetDimension()) ),
+    snake( new Snake({1, 1}, config) ),
+    goal(new Goal(rng, board, snake)),
+    sprite(new Sprite(rng, board, snake, goal, config))
 {
     assert(!GetWindowHandle());
     InitWindow(width, height, title.c_str());
+    eat = LoadSound("../assets/sound/step.mp3");
     SetTargetFPS(fps);
+
+    board->InitItems( rng );
+    PlaySound(beat);
 }
 Game::~Game() noexcept
 {
@@ -30,10 +37,33 @@ void Game::Tick()
     Draw();
     EndDrawing();
 }
+void Game::RestartGame()
+{
+    delete board;
+    delete snake;
+    delete goal;
+    delete sprite;
+    board = nullptr;
+    snake = nullptr;
+    goal = nullptr;
+    sprite = nullptr;
+
+    board = new Board(config.GetWidth(), config.GetHeight(), config.GetDimension());
+    snake = new Snake({1, 1}, config);
+    goal = new Goal(rng, board, snake);
+    sprite = new Sprite(rng, board, snake, goal, config);
+
+    board->InitItems( rng );
+    delta_loc = {1, 0};
+    last_delta_loc = {1, 0};
+    snakePeriod = 0.2f;
+    spriteMoveCount = 0;
+    
+    PlaySound(beat);
+}
 void Game::Update()
 {
-    dt = fr.Mark();
-    
+    const float dt = fr.Mark();
     if(!IsGameOver)
     {
         if(IsKeyPressed(KEY_UP))
@@ -55,17 +85,18 @@ void Game::Update()
         
         //
         ++spriteMoveCount;
-        if( spriteMoveCount == spritePeriod )
+        if( spriteMoveCount >= spritePeriod )
         {
             spriteMoveCount = 0;
-            sprite.Respawn(rng, board, snake, goal);
+            sprite->Respawn(rng, board, snake, goal);
         }
 
         //Snake Period Compare Frame
-        ++snakeMoveCount;
-        if( snakeMoveCount == snakePeriod )
+        snakeMoveCount += dt;
+
+        if( snakeMoveCount >= snakePeriod )
         {
-            snakeMoveCount = 0;
+            snakeMoveCount -= snakePeriod;
             //Check NOT reverse
             if(
                 last_delta_loc.x * delta_loc.x != -1 &&
@@ -73,31 +104,51 @@ void Game::Update()
             ) {
                 last_delta_loc = delta_loc;
             }
-            const Location next = snake.GetNextHeadLocation(last_delta_loc);
-            if(!board.IsInsideBoard( next ) ||
-               snake.IsInTileExceptEnd( next ) ||
-               sprite.IsTouch( next ))
+            const Location next = snake->GetNextHeadLocation(last_delta_loc);
+            if(!board->IsInsideBoard( next ) ||
+               snake->IsInTileExceptEnd( next ) ||
+               sprite->IsTouch( next ))
             {
                 IsGameOver = true;
             } else {
-                bool eating = snake.GetNextHeadLocation(last_delta_loc) == goal.GetLocation();
+                bool eating = next == goal->GetLocation();
                 if(eating)
                 {
-                    snake.Grow();
+                    PlaySound(eat);
+                    snake->Grow();
                 }
-                snake.MoveBy( last_delta_loc );
-                if(eating) goal.Respawn(rng, board, snake);
+                snake->MoveBy( last_delta_loc );
+                if(eating) 
+                {
+                    goal->Respawn(rng, board, snake);
+                    board->SetItemEmpty( next );
+                }
+
+                if( board->checkExistItem( next ) )
+                {
+                    board->SetItemEmpty( next );
+                    if(snakePeriod >= 0) snakePeriod -= config.GetSpeedUp();
+                }
             }
+        }
+    }
+    else
+    {
+        if(IsKeyPressed(KEY_SPACE))
+        {
+            RestartGame();
+            IsGameOver = false;
         }
     }
 }
 void Game::Draw()
 {
     ClearBackground(BLACK);
-    board.Draw();
-    snake.Draw(board);
-    goal.Draw(board);
-    sprite.Draw(board);
+    board->Draw();
+    board->DrawItem();
+    snake->Draw(board);
+    goal->Draw(board);
+    sprite->Draw(board);
     if(IsGameOver)
     {
         DrawGameText("Game Over");

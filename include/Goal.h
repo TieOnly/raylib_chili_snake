@@ -8,14 +8,11 @@
 class Goal
 {
 public:
-    Goal(std::mt19937& rng, Board& board, const Snake& snake);
-    void Respawn(std::mt19937& rng, Board& board, const Snake& snake);
+    Goal(std::mt19937& rng, Board* board, const Snake* snake);
+    void Respawn(std::mt19937& rng, Board* board, const Snake* snake);
     const Location& GetLocation() const;
-    void Draw(Board& board) const;
-    bool IsInTile(const Location& loc_in) const;
+    void Draw(Board* board) const;
 private:
     Location loc;
-    static constexpr int width = 20;
-    static constexpr int height = 20;
     static constexpr Color color = RED;
 };

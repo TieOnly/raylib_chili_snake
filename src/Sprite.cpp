@@ -1,67 +1,66 @@
 #include <random>
 #include "Sprite.h"
 
-Sprite::Sprite(std::mt19937& rng, Board& board, const Snake& snake, const Goal& goal)
+Sprite::Sprite(std::mt19937& rng, Board* board, const Snake* snake, const Goal* goal, const settings::Config& config)
+    :
+    nWallMax( config.GetWidth() * config.GetHeight() / 20 ),
+    pWall( new Wall[nWallMax] )
 {
     Init(rng, board, snake, goal);
 }
-bool Sprite::IsUniqueOwn(const Location& newLoc) const
+Sprite::~Sprite()
 {
-    for(int i = 0; i < nWalls; ++i)
-    {
-        if(walls[i].GetLocation() == newLoc)
-        {
-            return false;
-        }
-    }
-    return true;
+    delete [] pWall;
+    pWall = nullptr;
 }
-void Sprite::Init(std::mt19937& rng, Board& board, const Snake& snake, const Goal& goal)
+void Sprite::Init(std::mt19937& rng, Board* board, const Snake* snake, const Goal* goal)
 {
-    std::uniform_int_distribution<int> xDist( 1, board.GetWidth() - 2 );
-    std::uniform_int_distribution<int> yDist( 1, board.GetHeight() - 2 );
+    std::uniform_int_distribution<int> xDist( 1, board->GetWidth() - 2 );
+    std::uniform_int_distribution<int> yDist( 1, board->GetHeight() - 2 );
 
     Location newLoc;
     do{
         newLoc.x = xDist( rng );
         newLoc.y = yDist( rng );
-    } while( snake.IsInTile( newLoc ) || goal.IsInTile( newLoc ));
+    } while( snake->IsInTile( newLoc ) || board->checkExistItem( newLoc ));
         
-    walls[0].SetLocation( newLoc );    
+    pWall[0].SetLocation( newLoc );    
+    board->SetItemExist( newLoc );
 }
-void Sprite::Respawn(std::mt19937& rng, Board& board, const Snake& snake, const Goal& goal)
+void Sprite::Respawn(std::mt19937& rng, Board* board, const Snake* snake, const Goal* goal)
 {
-    std::uniform_int_distribution<int> xDist( 1, board.GetWidth() - 2 );
-    std::uniform_int_distribution<int> yDist( 1, board.GetHeight() - 2 );
+    std::uniform_int_distribution<int> xDist( 1, board->GetWidth() - 2 );
+    std::uniform_int_distribution<int> yDist( 1, board->GetHeight() - 2 );
 
     Location newLoc;
     do{
         newLoc.x = xDist( rng );
         newLoc.y = yDist( rng );
-    } while( snake.IsInTile( newLoc ) || goal.IsInTile( newLoc ) || !IsUniqueOwn( newLoc ));
+    } while( snake->IsInTile( newLoc ) || board->checkExistItem( newLoc ));
     
     if( nWalls < nWallMax )
     {
-        walls[nWalls].SetLocation( newLoc );
+        pWall[nWalls].SetLocation( newLoc );
         ++nWalls;
     }
+    board->SetItemExist( newLoc );
 }
 bool Sprite::IsTouch(const Location& loc_in) const
 {
     for(int i = 0; i < nWalls; ++i)
     {
-        if(walls[i].GetLocation() == loc_in)
+        if(pWall[i].GetLocation() == loc_in)
         {
             return true;
         }
     }
     return false;
 }
-void Sprite::Draw(Board& board) const
+void Sprite::Draw(Board* board) const
 {
     for(int i = 0; i < nWalls; ++i)
     {
-        walls[i].Draw(board);
+        pWall[i].Draw(board);
     }
 }
 
@@ -73,7 +72,7 @@ const Location& Sprite::Wall::GetLocation() const
 {
     return loc;
 }
-void Sprite::Wall::Draw(Board& board) const
+void Sprite::Wall::Draw(Board* board) const
 {
-    board.DrawCell( loc, color );
+    board->DrawCell( loc, color );
 }

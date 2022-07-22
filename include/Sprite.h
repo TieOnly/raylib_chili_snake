@@ -1,5 +1,6 @@
 #pragma once
 #include <random>
+#include "Settings.h"
 #include "raylib.h"
 #include "Location.h"
 #include "Board.h"
@@ -14,20 +15,21 @@ private:
     public:
         void SetLocation(const Location& newLoc);
         const Location& GetLocation() const;
-        void Draw(Board& board) const;
+        void Draw(Board* board) const;
     private:
         Location loc;
         static constexpr Color color = RAYWHITE;
     };
 public:
-    Sprite(std::mt19937& rng, Board& board, const Snake& snake, const Goal& goal);
-    void Init(std::mt19937& rng, Board& board, const Snake& snake, const Goal& goal);
-    void Respawn(std::mt19937& rng, Board& board, const Snake& snake, const Goal& goal);
+    Sprite(std::mt19937& rng, Board* board, const Snake* snake, const Goal* goal, const settings::Config& config);
+    ~Sprite();
+    void Init(std::mt19937& rng, Board* board, const Snake* snake, const Goal* goal);
+    void Respawn(std::mt19937& rng, Board* board, const Snake* snake, const Goal* goal);
     bool IsUniqueOwn(const Location& newLoc) const;
     bool IsTouch(const Location& loc_in) const;
-    void Draw(Board& board) const;
+    void Draw(Board* board) const;
 private:
-    static constexpr int nWallMax = 10;
-    Wall walls[nWallMax];
+    int nWallMax;
     int nWalls = 1;
+    Wall* pWall = nullptr;
 };

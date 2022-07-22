@@ -1,0 +1,8 @@
+[Tile Size]
+15
+
+[Board Size]
+10 20
+
+[Speed Up]
+0.005f
